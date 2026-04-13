@@ -1,2 +1,3 @@
 # Built binary inside tmux source tree (submodule checkout)
 tmux/tmux
+tmux/tmux_asan
