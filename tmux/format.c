@@ -1425,6 +1425,13 @@ format_cb_client_prefix(struct format_tree *ft)
 	return (NULL);
 }
 
+/* Callback for client_prefix_hint. */
+static void *
+format_cb_client_prefix_hint(__unused struct format_tree *ft)
+{
+	return (xstrdup(server_client_get_prefix_hint()));
+}
+
 /* Callback for client_readonly. */
 static void *
 format_cb_client_readonly(struct format_tree *ft)
@@ -2825,6 +2832,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "client_prefix", FORMAT_TABLE_STRING,
 	  format_cb_client_prefix
+	},
+	{ "client_prefix_hint", FORMAT_TABLE_STRING,
+	  format_cb_client_prefix_hint
 	},
 	{ "client_readonly", FORMAT_TABLE_STRING,
 	  format_cb_client_readonly

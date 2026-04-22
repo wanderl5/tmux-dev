@@ -2772,6 +2772,7 @@ void	 server_client_overlay_range(u_int, u_int, u_int, u_int, u_int, u_int,
 	     u_int, struct overlay_ranges *);
 void	 server_client_set_key_table(struct client *, const char *);
 const char *server_client_get_key_table(struct client *);
+const char *server_client_get_prefix_hint(void);
 int	 server_client_check_nested(struct client *);
 int	 server_client_handle_key(struct client *, struct key_event *);
 struct client *server_client_create(int);

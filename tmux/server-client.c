@@ -87,158 +87,24 @@ server_client_overlay_timer(__unused int fd, __unused short events, void *data)
 	server_client_clear_overlay(data);
 }
 
-struct which_key_data {
-	struct screen	s;
-	u_int		px;
-	u_int		py;
-	u_int		sw;
-	u_int		sh;
-};
-
-static void
-which_key_check_cb(struct client *c, void *cbdata, u_int px, u_int py,
-    u_int nx, struct overlay_ranges *r)
+const char *
+server_client_get_prefix_hint(void)
 {
-	struct which_key_data	*wkd = cbdata;
-	(void)c;
-
-	server_client_overlay_range(wkd->px, wkd->py, wkd->sw, wkd->sh,
-	    px, py, nx, r);
-}
-
-static void
-which_key_draw_cb(struct client *c, void *cbdata,
-    __unused struct screen_redraw_ctx *rctx)
-{
-	struct which_key_data	*wkd = cbdata;
-	struct tty		*tty = &c->tty;
-	struct screen		*s = &wkd->s;
-	u_int			 i;
-
-	for (i = 0; i < screen_size_y(s); i++) {
-		tty_draw_line(tty, s, 0, i, wkd->sw, wkd->px,
-		    wkd->py + i, &grid_default_cell, NULL);
-	}
-}
-
-static int
-which_key_key_cb(__unused struct client *c, __unused void *cbdata,
-    __unused struct key_event *event)
-{
-	return (2);
-}
-
-static void
-which_key_free_cb(__unused struct client *c, void *cbdata)
-{
-	struct which_key_data	*wkd = cbdata;
-
-	screen_free(&wkd->s);
-	free(wkd);
+	return ("Prefix active: c new-session, s sessions, "
+	    "| split-vertical, - split-horizontal, d detach, ? keys");
 }
 
 static void
 server_client_show_which_key(struct client *c)
 {
-	struct which_key_data	*wkd;
-	struct key_table	*table;
-	struct key_binding	*bd;
-	struct screen_write_ctx	 ctx;
-	struct grid_cell	 gc, title_gc;
-	u_int			 sx = c->tty.sx;
-	u_int			 sy = c->tty.sy;
-	u_int			 cols, col_w, row, col, count, i;
-	const char		*keystr, *desc;
-	char			*cmdstr;
+	struct session	*s = c->session;
+	uint64_t	 prefix_delay = 0;
 
-	table = key_bindings_get_table("prefix", 0);
-	if (table == NULL)
-		return;
-
-	count = 0;
-	for (bd = key_bindings_first(table); bd != NULL;
-	    bd = key_bindings_next(table, bd))
-		count++;
-	if (count == 0)
-		return;
-
-	if (sx >= 160)
-		cols = 3;
-	else if (sx >= 80)
-		cols = 2;
-	else
-		cols = 1;
-
-	col_w = sx / cols;
-
-	u_int rows = (count + cols - 1) / cols;
-	u_int popup_h = rows + 2;
-	if (popup_h > sy * 3 / 5)
-		popup_h = sy * 3 / 5;
-	if (popup_h < 4)
-		popup_h = 4;
-	if (popup_h > sy)
-		popup_h = sy;
-
-	u_int visible_rows = popup_h - 2;
-	u_int popup_y = sy - popup_h;
-	u_int popup_x = 0;
-	u_int popup_w = sx;
-
-	wkd = xcalloc(1, sizeof *wkd);
-	wkd->px = popup_x;
-	wkd->py = popup_y;
-	wkd->sw = popup_w;
-	wkd->sh = popup_h;
-
-	screen_init(&wkd->s, popup_w, popup_h, 0);
-
-	memcpy(&gc, &grid_default_cell, sizeof gc);
-	memcpy(&title_gc, &grid_default_cell, sizeof title_gc);
-	gc.fg = 0;
-	gc.bg = 4;
-	title_gc.fg = 3;
-	title_gc.bg = 4;
-	title_gc.attr |= GRID_ATTR_BRIGHT;
-
-	screen_write_start(&ctx, &wkd->s);
-	screen_write_clearscreen(&ctx, gc.bg);
-	screen_write_box(&ctx, popup_w, popup_h, BOX_LINES_DEFAULT, NULL,
-	    NULL);
-
-	screen_write_cursormove(&ctx, 2, 0, 0);
-	screen_write_puts(&ctx, &title_gc, " Prefix Key Bindings ");
-
-	bd = key_bindings_first(table);
-	for (i = 0; i < visible_rows && bd != NULL; ) {
-		for (col = 0; col < cols && bd != NULL; col++) {
-			keystr = key_string_lookup_key(bd->key, 0);
-			if (bd->note != NULL && *bd->note != '\0')
-				desc = bd->note;
-			else {
-				cmdstr = cmd_list_print(bd->cmdlist, 0);
-				desc = cmdstr;
-			}
-
-			row = i;
-			screen_write_cursormove(&ctx,
-			    col * col_w + 1, row + 1, 0);
-			screen_write_nputs(&ctx, col_w - 2, &title_gc,
-			    "%-10s", keystr);
-			screen_write_nputs(&ctx, col_w - 12, &gc, "%s", desc);
-
-			if (bd->note == NULL)
-				free(cmdstr);
-
-			bd = key_bindings_next(table, bd);
-		}
-		i++;
-	}
-
-	screen_write_stop(&ctx);
-
-	server_client_set_overlay(c, 0, which_key_check_cb, NULL,
-	    which_key_draw_cb, which_key_key_cb, which_key_free_cb, NULL, wkd);
+	if (s != NULL)
+		prefix_delay = options_get_number(global_options,
+		    "prefix-timeout");
+	status_message_set(c, (int)prefix_delay, 1, 0, "%s",
+	    server_client_get_prefix_hint());
 }
 
 /* Set an overlay on client. */
