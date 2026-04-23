@@ -91,7 +91,7 @@ const char *
 server_client_get_prefix_hint(void)
 {
 	return ("Prefix active: c new-session, s sessions, "
-	    "| split-vertical, - split-horizontal, d detach, ? keys");
+	    "_ split-vertical, | split-horizontal, d detach, ? keys");
 }
 
 static void

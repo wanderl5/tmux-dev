@@ -35,7 +35,7 @@ assert_eq "M-n binding" \
 
 hint=$($TMUX display-message -p '#{client_prefix_hint}')
 assert_eq "prefix hint text" \
-	"Prefix active: c new-session, s sessions, | split-vertical, - split-horizontal, d detach, ? keys" \
+	"Prefix active: c new-session, s sessions, _ split-vertical, | split-horizontal, d detach, ? keys" \
 	"$hint"
 
 $TMUX kill-server 2>/dev/null
