@@ -419,7 +419,7 @@ key_bindings_init(void)
 		"bind -N 'Rotate through the panes in reverse' M-o { rotate-window -D }",
 		"bind -N 'Select the previous window with an alert' M-p { previous-window -a }",
 		"bind -N 'Toggle floating terminal' -n M-t { toggle-floating-term }",
-		"bind -N 'Choose a session from a list' -n M-s { choose-tree -Zs }",
+		"bind -N 'Choose a session from a list' -n M-s { choose-tree -AZs; send-keys / }",
 		"bind -N 'Move the visible part of the window up' -r S-Up { refresh-client -U 10 }",
 		"bind -N 'Move the visible part of the window down' -r S-Down { refresh-client -D 10 }",
 		"bind -N 'Move the visible part of the window left' -r S-Left { refresh-client -L 10 }",

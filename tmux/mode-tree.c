@@ -49,6 +49,7 @@ struct mode_tree_data {
 	mode_tree_build_cb        buildcb;
 	mode_tree_draw_cb         drawcb;
 	mode_tree_search_cb       searchcb;
+	mode_tree_search_done_cb  searchdonecb;
 	mode_tree_menu_cb         menucb;
 	mode_tree_height_cb       heightcb;
 	mode_tree_key_cb	  keycb;
@@ -492,6 +493,13 @@ mode_tree_set_hint(struct mode_tree_data *mtd, const char *text)
 }
 
 void
+mode_tree_set_search_done_cb(struct mode_tree_data *mtd,
+    mode_tree_search_done_cb searchdonecb)
+{
+	mtd->searchdonecb = searchdonecb;
+}
+
+void
 mode_tree_build(struct mode_tree_data *mtd)
 {
 	struct screen	*s = &mtd->screen;
@@ -919,7 +927,7 @@ mode_tree_search_forward(struct mode_tree_data *mtd)
 	return (NULL);
 }
 
-static void
+static int
 mode_tree_search_set(struct mode_tree_data *mtd)
 {
 	struct mode_tree_item	*mti, *loop;
@@ -930,7 +938,7 @@ mode_tree_search_set(struct mode_tree_data *mtd)
 	else
 		mti = mode_tree_search_backward(mtd);
 	if (mti == NULL)
-		return;
+		return (0);
 	tag = mti->tag;
 
 	loop = mti->parent;
@@ -943,13 +951,14 @@ mode_tree_search_set(struct mode_tree_data *mtd)
 	mode_tree_set_current(mtd, tag);
 	mode_tree_draw(mtd);
 	mtd->wp->flags |= PANE_REDRAW;
+	return (1);
 }
 
 static int
-mode_tree_search_callback(__unused struct client *c, void *data, const char *s,
-    __unused int done)
+mode_tree_search_callback(struct client *c, void *data, const char *s, int done)
 {
 	struct mode_tree_data	*mtd = data;
+	struct mode_tree_item	*mti;
 
 	if (mtd->dead)
 		return (0);
@@ -960,7 +969,11 @@ mode_tree_search_callback(__unused struct client *c, void *data, const char *s,
 		return (0);
 	}
 	mtd->search = xstrdup(s);
-	mode_tree_search_set(mtd);
+	if (mode_tree_search_set(mtd) && done && mtd->searchdonecb != NULL) {
+		mti = mtd->line_list[mtd->current].item;
+		mtd->searchdonecb(mtd->modedata, mti->itemdata, c);
+		window_pane_reset_mode(mtd->wp);
+	}
 
 	return (0);
 }

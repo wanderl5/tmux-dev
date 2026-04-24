@@ -3226,6 +3226,7 @@ typedef void (*mode_tree_build_cb)(void *, struct mode_tree_sort_criteria *,
 typedef void (*mode_tree_draw_cb)(void *, void *, struct screen_write_ctx *,
 	     u_int, u_int);
 typedef int (*mode_tree_search_cb)(void *, void *, const char *);
+typedef void (*mode_tree_search_done_cb)(void *, void *, struct client *);
 typedef void (*mode_tree_menu_cb)(void *, struct client *, key_code);
 typedef u_int (*mode_tree_height_cb)(void *, u_int);
 typedef key_code (*mode_tree_key_cb)(void *, void *, u_int);
@@ -3249,6 +3250,8 @@ void	 mode_tree_zoom(struct mode_tree_data *, struct args *);
 void	 mode_tree_build(struct mode_tree_data *);
 void	 mode_tree_free(struct mode_tree_data *);
 void	 mode_tree_set_hint(struct mode_tree_data *, const char *);
+void	 mode_tree_set_search_done_cb(struct mode_tree_data *,
+	     mode_tree_search_done_cb);
 void	 mode_tree_resize(struct mode_tree_data *, u_int, u_int);
 struct mode_tree_item *mode_tree_add(struct mode_tree_data *,
 	     struct mode_tree_item *, void *, uint64_t, const char *,

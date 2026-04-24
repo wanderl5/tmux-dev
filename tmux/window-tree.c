@@ -46,6 +46,8 @@ static void		 window_tree_free(struct window_mode_entry *);
 static void		 window_tree_resize(struct window_mode_entry *, u_int,
 			     u_int);
 static void		 window_tree_update(struct window_mode_entry *);
+static void		 window_tree_search_done(void *, void *,
+			     struct client *);
 static void		 window_tree_key(struct window_mode_entry *,
 			     struct client *, struct session *,
 			     struct winlink *, key_code, struct mouse_event *);
@@ -957,6 +959,8 @@ window_tree_init(struct window_mode_entry *wme, struct cmd_find_state *fs,
 	    window_tree_draw, window_tree_search, window_tree_menu, NULL,
 	    window_tree_get_key, data, window_tree_menu_items,
 	    window_tree_sort_list, nitems(window_tree_sort_list), &s);
+	if (data->type == WINDOW_TREE_SESSION && args_has(args, 'A'))
+		mode_tree_set_search_done_cb(data->data, window_tree_search_done);
 	mode_tree_zoom(data->data, args);
 
 	if (data->type == WINDOW_TREE_SESSION) {
@@ -1078,6 +1082,12 @@ window_tree_command_each(void *modedata, void *itemdata, struct client *c,
 	if (name != NULL)
 		mode_tree_run_command(c, &fs, data->entered, name);
 	free(name);
+}
+
+static void
+window_tree_search_done(void *modedata, void *itemdata, struct client *c)
+{
+	window_tree_command_each(modedata, itemdata, c, KEYC_NONE);
 }
 
 static enum cmd_retval
