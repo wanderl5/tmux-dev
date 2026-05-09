@@ -137,6 +137,10 @@ static void	window_copy_scroll_up(struct window_mode_entry *, u_int);
 static void	window_copy_scroll_down(struct window_mode_entry *, u_int);
 static void	window_copy_rectangle_set(struct window_mode_entry *, int);
 static void	window_copy_move_mouse(struct mouse_event *);
+static struct window_pane *window_copy_drag_pane(struct client *,
+		    struct mouse_event *);
+static void	window_copy_drag_at(struct window_pane *, struct mouse_event *,
+		    u_int *, u_int *);
 static void	window_copy_drag_update(struct client *, struct mouse_event *);
 static void	window_copy_drag_release(struct client *, struct mouse_event *);
 static void	window_copy_jump_to_mark(struct window_mode_entry *);
@@ -5611,6 +5615,7 @@ window_copy_start_drag(struct client *c, struct mouse_event *m)
 
 	c->tty.mouse_drag_update = window_copy_drag_update;
 	c->tty.mouse_drag_release = window_copy_drag_release;
+	c->tty.mouse_drag_wp = wp->id;
 
 	data = wme->data;
 	yg = screen_hsize(data->backing) + y - data->oy;
@@ -5639,6 +5644,48 @@ window_copy_start_drag(struct client *c, struct mouse_event *m)
 	window_copy_drag_update(c, m);
 }
 
+static struct window_pane *
+window_copy_drag_pane(struct client *c, struct mouse_event *m)
+{
+	struct window_pane	*wp;
+
+	if (c != NULL && c->tty.mouse_drag_wp != 0) {
+		wp = window_pane_find_by_id(c->tty.mouse_drag_wp);
+		if (wp != NULL)
+			return (wp);
+	}
+	return (cmd_mouse_pane(m, NULL, NULL));
+}
+
+static void
+window_copy_drag_at(struct window_pane *wp, struct mouse_event *m, u_int *xp,
+    u_int *yp)
+{
+	u_int	x, y, left, right, top, bottom;
+
+	x = m->x + m->ox;
+	y = m->y + m->oy;
+	if (m->statusat == 0 && y >= m->statuslines)
+		y -= m->statuslines;
+
+	left = wp->xoff;
+	right = wp->xoff + wp->sx - 1;
+	top = wp->yoff;
+	bottom = wp->yoff + wp->sy - 1;
+
+	if (x < left)
+		x = left;
+	else if (x > right)
+		x = right;
+	if (y < top)
+		y = top;
+	else if (y > bottom)
+		y = bottom;
+
+	*xp = x - wp->xoff;
+	*yp = y - wp->yoff;
+}
+
 static void
 window_copy_drag_update(struct client *c, struct mouse_event *m)
 {
@@ -5653,7 +5700,7 @@ window_copy_drag_update(struct client *c, struct mouse_event *m)
 	if (c == NULL)
 		return;
 
-	wp = cmd_mouse_pane(m, NULL, NULL);
+	wp = window_copy_drag_pane(c, m);
 	if (wp == NULL)
 		return;
 	wme = TAILQ_FIRST(&wp->modes);
@@ -5665,8 +5712,7 @@ window_copy_drag_update(struct client *c, struct mouse_event *m)
 	data = wme->data;
 	evtimer_del(&data->dragtimer);
 
-	if (cmd_mouse_at(wp, m, &x, &y, 0) != 0)
-		return;
+	window_copy_drag_at(wp, m, &x, &y);
 	old_cx = data->cx;
 	old_cy = data->cy;
 
@@ -5694,7 +5740,7 @@ window_copy_drag_release(struct client *c, struct mouse_event *m)
 	if (c == NULL)
 		return;
 
-	wp = cmd_mouse_pane(m, NULL, NULL);
+	wp = window_copy_drag_pane(c, m);
 	if (wp == NULL)
 		return;
 	wme = TAILQ_FIRST(&wp->modes);

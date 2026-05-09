@@ -810,8 +810,18 @@ have_event:
 		tty_window_offset(&c->tty, &m->ox, &m->oy, &sx, &sy);
 		log_debug("mouse window @%u at %u,%u (%ux%u)",
 		    s->curw->window->id, m->ox, m->oy, sx, sy);
-		if (px > sx || py > sy)
-			return (KEYC_UNKNOWN);
+		if (px > sx || py > sy) {
+			if (c->tty.mouse_drag_wp == 0 ||
+			    c->tty.mouse_drag_flag == 0)
+				return (KEYC_UNKNOWN);
+			wp = window_pane_find_by_id(c->tty.mouse_drag_wp);
+			if (wp == NULL)
+				return (KEYC_UNKNOWN);
+			where = PANE;
+			m->wp = wp->id;
+			m->w = wp->window->id;
+			goto have_location;
+		}
 		px = px + m->ox;
 		py = py + m->oy;
 
@@ -846,13 +856,25 @@ have_event:
 		m->w = wp->window->id;
 	}
 
+have_location:
+
 	/* Stop dragging if needed. */
 	if (type != DRAG && type != WHEEL && c->tty.mouse_drag_flag != 0) {
 		if (c->tty.mouse_drag_release != NULL)
 			c->tty.mouse_drag_release(c, m);
 
+		if (c->tty.mouse_drag_wp != 0) {
+			wp = window_pane_find_by_id(c->tty.mouse_drag_wp);
+			if (wp != NULL) {
+				where = PANE;
+				m->wp = wp->id;
+				m->w = wp->window->id;
+			}
+		}
+
 		c->tty.mouse_drag_update = NULL;
 		c->tty.mouse_drag_release = NULL;
+		c->tty.mouse_drag_wp = 0;
 
 		/*
 		 * End a mouse drag by passing a MouseDragEnd key corresponding
@@ -990,6 +1012,7 @@ have_event:
 			break;
 		}
 		c->tty.mouse_drag_flag = 0;
+		c->tty.mouse_drag_wp = 0;
 		goto out;
 	}
 
@@ -1151,6 +1174,10 @@ have_event:
 		 * corresponds to the mouse button in use.
 		 */
 		c->tty.mouse_drag_flag = MOUSE_BUTTONS(b) + 1;
+		if (where == PANE)
+			c->tty.mouse_drag_wp = m->wp;
+		else
+			c->tty.mouse_drag_wp = 0;
 		break;
 	case WHEEL:
 		if (MOUSE_BUTTONS(b) == MOUSE_WHEEL_UP) {
