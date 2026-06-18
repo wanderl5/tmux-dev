@@ -33,6 +33,11 @@ assert_eq "M-n binding" \
 	'bind-key    -T root         M-n                    command-prompt -p "new session name" { new-session -s -- "%%" }' \
 	"$binding"
 
+binding=$($TMUX list-keys -T prefix c)
+assert_eq "prefix c binding" \
+	'bind-key -T prefix c new-session' \
+	"$binding"
+
 hint=$($TMUX display-message -p '#{client_prefix_hint}')
 assert_eq "prefix hint text" \
 	"Prefix active: c new-session, s sessions, _ split-vertical, | split-horizontal, d detach, ? keys" \
