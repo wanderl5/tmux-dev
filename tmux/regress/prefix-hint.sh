@@ -28,14 +28,14 @@ assert_eq() {
 	fi
 }
 
-binding=$($TMUX list-keys | grep 'M-n')
+binding=$($TMUX list-keys -T root M-n)
 assert_eq "M-n binding" \
-	'bind-key    -T root         M-n                    command-prompt -p "new session name" { new-session -s -- "%%" }' \
+	'bind-key -T root M-n command-prompt -p "new session name" { new-session -s -- "%%" }' \
 	"$binding"
 
 binding=$($TMUX list-keys -T prefix c)
 assert_eq "prefix c binding" \
-	'bind-key -T prefix c new-session' \
+	'bind-key -T prefix c command-prompt -p "new session name" { new-session -s -- "%%" }' \
 	"$binding"
 
 hint=$($TMUX display-message -p '#{client_prefix_hint}')

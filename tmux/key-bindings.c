@@ -383,7 +383,7 @@ key_bindings_init(void)
 		"bind -N 'Clear the marked pane' M { select-pane -M }",
 		"bind -N 'Enter copy mode' [ { copy-mode }",
 		"bind -N 'Paste the most recent paste buffer' ] { paste-buffer -p }",
-		"bind -N 'Create a new session' c { new-session }",
+		"bind -N 'Create a new session' c { command-prompt -p 'new session name' { new-session -s -- '%%' } }",
 		"bind -N 'Detach the current client' d { detach-client }",
 		"bind -N 'Search for a pane' f { command-prompt { find-window -Z -- '%%' } }",
 		"bind -N 'Display window information' i { display-message }",
