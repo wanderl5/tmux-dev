@@ -566,7 +566,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi C-j { send -X copy-pipe-and-cancel }",
 		"bind -Tcopy-mode-vi Enter { send -X copy-pipe-and-cancel }",
 		"bind -Tcopy-mode-vi C-u { send -X halfpage-up }",
-		"bind -Tcopy-mode-vi C-v { send -X rectangle-toggle }",
+		"bind -Tcopy-mode-vi C-v { send -X begin-selection; send -X rectangle-on }",
 		"bind -Tcopy-mode-vi C-y { send -X scroll-up }",
 		"bind -Tcopy-mode-vi Escape { send -X clear-selection }",
 		"bind -Tcopy-mode-vi Space { send -X begin-selection }",
@@ -618,8 +618,9 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi q { send -X cancel }",
 		"bind -Tcopy-mode-vi r { send -X refresh-from-pane }",
 		"bind -Tcopy-mode-vi t { command-prompt -1p'(jump to forward)' { send -X jump-to-forward '%%' } }",
-		"bind -Tcopy-mode-vi v { send -X rectangle-toggle }",
+		"bind -Tcopy-mode-vi v { send -X rectangle-off; send -X begin-selection }",
 		"bind -Tcopy-mode-vi w { send -X next-word }",
+		"bind -Tcopy-mode-vi y { if -F '#{selection_present}' { send -X copy-pipe-and-cancel } { switch-client -Tcopy-mode-vi-yank } }",
 		"bind -Tcopy-mode-vi '{' { send -X previous-paragraph }",
 		"bind -Tcopy-mode-vi '}' { send -X next-paragraph }",
 		"bind -Tcopy-mode-vi % { send -X next-matching-bracket }",
@@ -642,6 +643,9 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi M-x { send -X jump-to-mark }",
 		"bind -Tcopy-mode-vi C-Up { send -X scroll-up }",
 		"bind -Tcopy-mode-vi C-Down { send -X scroll-down }",
+
+		/* Copy mode (vi) yank prefix. */
+		"bind -Tcopy-mode-vi-yank y { send -X copy-pipe-line-and-cancel }",
 	};
 	u_int			 i;
 	struct cmd_parse_result	*pr;
