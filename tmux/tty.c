@@ -445,7 +445,6 @@ tty_stop_tty(struct tty *tty)
 	if (tty->ccolour != -1)
 		tty_raw(tty, tty_term_string(tty->term, TTYC_CR));
 
-	tty_raw(tty, tty_term_string(tty->term, TTYC_CNORM));
 	if (tty_term_has(tty->term, TTYC_KMOUS)) {
 		tty_raw(tty, "\033[?1000l\033[?1002l\033[?1003l");
 		tty_raw(tty, "\033[?1006l\033[?1005l");
@@ -461,6 +460,7 @@ tty_stop_tty(struct tty *tty)
 	if (tty_use_margin(tty))
 		tty_raw(tty, tty_term_string(tty->term, TTYC_DSMG));
 	tty_raw(tty, tty_term_string(tty->term, TTYC_RMCUP));
+	tty_raw(tty, tty_term_string(tty->term, TTYC_CNORM));
 
 	setblocking(c->fd, 1);
 }
