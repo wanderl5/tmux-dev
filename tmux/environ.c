@@ -18,9 +18,15 @@
 
 #include <sys/types.h>
 
+#if defined(HAVE_CURSES_H)
+#include <curses.h>
+#elif defined(HAVE_NCURSES_H)
+#include <ncurses.h>
+#endif
 #include <fnmatch.h>
 #include <stdlib.h>
 #include <string.h>
+#include <term.h>
 #include <unistd.h>
 
 #include "tmux.h"
@@ -37,6 +43,39 @@ static int
 environ_cmp(struct environ_entry *envent1, struct environ_entry *envent2)
 {
 	return (strcmp(envent1->name, envent2->name));
+}
+
+static int
+environ_term_has_cm(const char *term)
+{
+	const char	*s;
+	char		 area[2048], *ap = area;
+	int		 error;
+
+	if (setupterm((char *)term, -1, &error) != OK)
+		return (0);
+	s = tigetstr("cup");
+	if (s == NULL || s == (char *)-1)
+		return (0);
+
+	if (tgetent(NULL, term) != 1)
+		return (0);
+	if (tgetstr("cm", &ap) == NULL)
+		return (0);
+	return (1);
+}
+
+static const char *
+environ_default_term(void)
+{
+	const char	*value;
+
+	value = options_get_string(global_options, "default-terminal");
+	if (environ_term_has_cm(value))
+		return (value);
+
+	log_debug("default-terminal %s missing cm, using screen", value);
+	return ("screen");
 }
 
 /* Initialise the environment. */
@@ -258,7 +297,7 @@ environ_for_session(struct session *s, int no_TERM)
 		environ_copy(s->environ, env);
 
 	if (!no_TERM) {
-		value = options_get_string(global_options, "default-terminal");
+		value = environ_default_term();
 		environ_set(env, "TERM", 0, "%s", value);
 		environ_set(env, "TERM_PROGRAM", 0, "%s", "tmux");
 		environ_set(env, "TERM_PROGRAM_VERSION", 0, "%s", getversion());
