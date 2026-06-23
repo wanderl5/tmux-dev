@@ -461,7 +461,7 @@ const struct options_table_entry options_table[] = {
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .minimum = 0,
 	  .maximum = INT_MAX,
-	  .default_num = 1,
+	  .default_num = 0,
 	  .unit = "milliseconds",
 	  .text = "Maximum time between input to assume it is pasting rather "
 		  "than typing."

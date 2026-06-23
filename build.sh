@@ -56,7 +56,14 @@ ok "环境检查通过（gcc=$(gcc --version | head -1 | awk '{print $3}'), jobs
 [[ -d "$SRC_DIR" ]] || die "源码目录不存在：$SRC_DIR"
 cd "$SRC_DIR"
 
-CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD)
+if CURRENT_TAG=$(git -C "$SCRIPT_DIR" describe --tags --exact-match 2>/dev/null); then
+  :
+elif CURRENT_TAG=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null); then
+  :
+else
+  CURRENT_TAG=unknown
+  warn "无法读取 Git 版本，继续使用当前源码编译"
+fi
 info "源码目录：$SRC_DIR（当前版本：$CURRENT_TAG）"
 
 # ---------- 清理 ----------

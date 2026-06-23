@@ -33,6 +33,11 @@ assert_eq "M-n binding" \
 	'bind-key -T root M-n command-prompt -p "new session name" { new-session -s "%%" }' \
 	"$binding"
 
+assume_paste_time=$($TMUX show-options -gv assume-paste-time)
+assert_eq "rapid shortcuts are not treated as paste" \
+	'0' \
+	"$assume_paste_time"
+
 binding=$($TMUX list-keys -T prefix c)
 assert_eq "prefix c binding" \
 	'bind-key -T prefix c command-prompt -p "new session name" { new-session -s "%%" }' \
