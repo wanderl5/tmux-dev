@@ -49,18 +49,12 @@ static int
 environ_term_has_cm(const char *term)
 {
 	const char	*s;
-	char		 area[2048], *ap = area;
 	int		 error;
 
 	if (setupterm((char *)term, -1, &error) != OK)
 		return (0);
 	s = tigetstr("cup");
 	if (s == NULL || s == (char *)-1)
-		return (0);
-
-	if (tgetent(NULL, term) != 1)
-		return (0);
-	if (tgetstr("cm", &ap) == NULL)
 		return (0);
 	return (1);
 }
